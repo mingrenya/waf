@@ -22,10 +22,8 @@ func main() {
 
 	handler := agent.NewAgent(waf, mongo)
 
-	//err = agent.StartServer("127.0.0.1:12345", handler)
-	//if err != nil {
-	//	log.Fatalf("Failed to start SPOE server: %v", err)
-	//}
-	//log.Println("WAF Agent started (SPOE Server start code not included)")
+	if err := agent.StartServer("127.0.0.1:12345", handler); err != nil {
+		log.Fatalf("Failed to start SPOE server: %v", err)
+	}
 }
 

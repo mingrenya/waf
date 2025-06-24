@@ -3,9 +3,12 @@ package database
 import (
 	"context"
 	"time"
+	"log"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"coraza-waf/backend/pkg/logging"
 )
 
 type MongoService struct {
@@ -13,28 +16,29 @@ type MongoService struct {
 	collection *mongo.Collection
 }
 
-func NewMongoService(uri, dbName, collectionName string) (*MongoService, error) {
-	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
-	if err != nil {
-		return nil, err
-	}
-
+func NewMongoService(uri, dbName, collName string) (*MongoService, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	err = client.Connect(ctx)
+
+	clientOpts := options.Client().ApplyURI(uri)
+	client, err := mongo.Connect(ctx, clientOpts)
 	if err != nil {
 		return nil, err
 	}
 
-	collection := client.Database(dbName).Collection(collectionName)
-	return &MongoService{client: client, collection: collection}, nil
+	coll := client.Database(dbName).Collection(collName)
+	return &MongoService{client: client, collection: coll}, nil
 }
 
-func (m *MongoService) InsertLog(log interface{}) error {
+func (m *MongoService) InsertLog(logEntry *logging.WafLog) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err := m.collection.InsertOne(ctx, log)
-	return err
+	_, err := m.collection.InsertOne(ctx, logEntry)
+	if err != nil {
+		log.Printf("Mongo InsertOne error: %v", err)
+		return err
+	}
+	return nil
 }
 
