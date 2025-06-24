@@ -1,0 +1,22 @@
+loglevel: info
+bind: 127.0.0.1:8080
+default_application: default-app
+applications:
+  - name: default-app
+    address: 127.0.0.1:80
+    workers: 4
+    response_check: true
+    transaction_ttl_ms: 60000
+spoa:
+  bind: 127.0.0.1:12345
+  loglevel: info
+  applications:
+    - name: default-app
+      address: 127.0.0.1:80
+      workers: 4
+      response_check: true
+      transaction_ttl_ms: 60000
+waf:
+  rules:
+    - rules.conf
+
