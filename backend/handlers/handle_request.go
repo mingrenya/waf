@@ -5,34 +5,37 @@ import (
 	"coraza-waf/backend/logger"
 	"io"
 	"bytes"
+	"time"
+	"log"
 )
 
-// HandleRequest 拦截请求并记录日志（使用结构体）
+// HandleRequest 拦截请求并记录日志
 func HandleRequest(c *gin.Context) {
 	// 保存请求体
 	body, _ := c.GetRawData()
 	c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
 
-	// 构造 RequestLog 实例（新增：字段映射）
-	var logData logger.RequestLog
-	logData.RequestTime = time.Now().Format(time.RFC3339)
-	logData.SourceIP = c.ClientIP()
-	logData.RequestMethod = c.Request.Method
-	logData.RequestURI = c.Request.URL.Path
-	logData.UserAgent = c.Request.UserAgent()
-	logData.RequestHeaders = c.Request.Header
-	logData.RequestBody = string(body)
-
-	// **新增：模拟 Coraza 的规则和拦截信息**
-	if blocked {
-		logData.Blocked = true
-		logData.CorazaRuleID = ptr("942120")         // 示例 SQL 注入规则 ID
-		logData.CorazaRuleMsg = "SQL Injection Attempt"
-		logData.CorazaAction = "deny"
+	logData := logger.WafLog{
+		RequestTime:   time.Now().Format(time.RFC3339),
+		SourceIP:      c.ClientIP(),
+		RequestMethod: c.Request.Method,
+		RequestURI:    c.Request.URL.Path,
+		UserAgent:     c.Request.UserAgent(),
+		RequestHost:   c.Request.Host,
+		RequestCookie: c.Request.Header.Get("Cookie"),
+		RequestID:     c.GetHeader("X-Request-ID"),
+		Blocked:       false, // 你可根据实际检测逻辑设置
+		RequestBody:   string(body),
+		RequestHeaders: c.Request.Header,
 	}
 
-	// 写入 MongoDB（使用结构体）
-	if err := logger.LogRequest(&logData); err != nil {
+	// 可根据实际检测逻辑设置拦截信息
+	// logData.Blocked = true
+	// logData.CorazaRuleID = ptr("942120")
+	// logData.CorazaRuleMsg = "SQL Injection Attempt"
+	// logData.CorazaAction = "deny"
+
+	if err := logger.InsertLog(logData); err != nil {
 		log.Println("写入请求日志失败:", err)
 	}
 
@@ -43,4 +46,5 @@ func HandleRequest(c *gin.Context) {
 func ptr(s string) *string {
 	return &s
 }
+
 

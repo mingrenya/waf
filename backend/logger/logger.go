@@ -1,14 +1,15 @@
 package logger
 
 import (
+    "bytes"
     "context"
     "fmt"
     "github.com/gin-gonic/gin"
     "go.mongodb.org/mongo-driver/v2/mongo"
     "go.mongodb.org/mongo-driver/v2/mongo/options"
     "go.mongodb.org/mongo-driver/v2/mongo/readpref"
+    "io"
     "time"
-    "bytes"
 )
 
 // WafLog 定义
@@ -33,6 +34,8 @@ type WafLog struct {
     ClientCountry    string              `bson:"client_country,omitempty"`
     ClientRegion     string              `bson:"client_region,omitempty"`
     OriginIPAddress  string              `bson:"origin_ip,omitempty"`
+    RequestBody      string              `bson:"request_body,omitempty"`
+    RequestHeaders   map[string][]string `bson:"request_headers,omitempty"`
     ResponseTime     int64               `bson:"response_time,omitempty"`
     ResponseLength   int64               `bson:"response_length,omitempty"`
     ResponseHeaders  map[string][]string `bson:"response_headers,omitempty"`
@@ -93,18 +96,31 @@ func InsertLog(log WafLog) error {
 
 // 请求日志处理
 func HandleRequest(ctx *gin.Context) {
+    headers := make(map[string][]string)
+    for k, v := range ctx.Request.Header {
+        headers[k] = v
+    }
+    body := ""
+    if ctx.Request.Body != nil {
+        buf := new(bytes.Buffer)
+        buf.ReadFrom(ctx.Request.Body)
+        body = buf.String()
+        ctx.Request.Body = io.NopCloser(bytes.NewBufferString(body))
+    }
     log := WafLog{
-        RequestTime:   time.Now().Format(time.RFC3339),
-        SourceIP:      ctx.ClientIP(),
-        RequestMethod: ctx.Request.Method,
-        RequestURI:    ctx.Request.RequestURI,
-        HTTPVersion:   ctx.Request.Proto,
-        RequestHost:   ctx.Request.Host,
-        UserAgent:     ctx.Request.Header.Get("User-Agent"),
-        Referer:       ctx.Request.Header.Get("Referer"),
-        RequestCookie: ctx.Request.Header.Get("Cookie"),
-        RequestID:     ctx.GetHeader("X-Request-ID"),
-        Blocked:       false,
+        RequestTime:    time.Now().Format(time.RFC3339),
+        SourceIP:       ctx.ClientIP(),
+        RequestMethod:  ctx.Request.Method,
+        RequestURI:     ctx.Request.RequestURI,
+        HTTPVersion:    ctx.Request.Proto,
+        RequestHost:    ctx.Request.Host,
+        UserAgent:      ctx.Request.Header.Get("User-Agent"),
+        Referer:        ctx.Request.Header.Get("Referer"),
+        RequestCookie:  ctx.Request.Header.Get("Cookie"),
+        RequestID:      ctx.GetHeader("X-Request-ID"),
+        Blocked:        false,
+        RequestBody:    body,
+        RequestHeaders: headers,
     }
     if err := InsertLog(log); err != nil {
         fmt.Printf("请求日志写入失败: %v\n", err)
@@ -158,3 +174,4 @@ func (w *ResponseBodyWriter) WriteString(s string) (int, error) {
     // fallback
     return w.Write([]byte(s))
 }
+
