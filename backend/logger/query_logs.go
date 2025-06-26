@@ -4,12 +4,11 @@ import (
 	"context"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
-	"time"
 )
 
 // QueryLogs 查询日志，支持过滤和分页
 func QueryLogs(ctx context.Context, filter bson.M, page, pageSize int) ([]bson.M, int64, error) {
-	col := Client().Database(DBName()).Collection("logs")
+	col := db.Collection("logs")
 	findOpts := options.Find().SetSort(bson.M{"request_time": -1}).SetSkip(int64((page-1)*pageSize)).SetLimit(int64(pageSize))
 	cursor, err := col.Find(ctx, filter, findOpts)
 	if err != nil {
@@ -26,3 +25,4 @@ func QueryLogs(ctx context.Context, filter bson.M, page, pageSize int) ([]bson.M
 	total, _ := col.CountDocuments(ctx, filter)
 	return results, total, nil
 }
+
