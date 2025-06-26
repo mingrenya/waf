@@ -300,7 +300,7 @@ SystemCallArchitectures=native
 SystemCallFilter=@system-service -@setuid -@ipc -@mount
 
 IPAddressDeny=any
-IPAddressAllow=localhost
+IPAddressAllow=127.0.0.1
 
 CapabilityBoundingSet=CAP_NET_BIND_SERVICE
 
