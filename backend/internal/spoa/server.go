@@ -75,14 +75,26 @@ func (s *SPOAServer) handleConn(conn net.Conn) {
         }
 
         clientIP := headers["client-ip"]
-        if msgName == "coraza-req" {
-            s.handler.HandleRequest(body, headers, clientIP)
-        } else if msgName == "coraza-res" {
-            s.handler.HandleResponse(body, headers, clientIP)
+        var respFrame []byte
+        // 官方示例联动逻辑
+        switch msgName {
+        case "coraza-req":
+            // 这里可根据 headers/body 进行 WAF 检测，示例：
+            // 1. 拦截特定路径
+            if headers["path"] == "/blockme" {
+                respFrame, err = buildSPOEResponse("deny", "", 0)
+            } else if headers["path"] == "/redirectme" {
+                respFrame, err = buildSPOEResponse("redirect", "http://example.com", 0)
+            } else {
+                respFrame, err = buildSPOEResponse("allow", "", 0)
+            }
+        case "coraza-res":
+            // 可根据响应内容做二次检测
+            respFrame, err = buildSPOEResponse("allow", "", 0)
+        default:
+            // 未知消息，返回错误
+            respFrame, err = buildSPOEResponse("deny", "", 1)
         }
-
-        // 这里根据WAF逻辑可以调整是否阻断，先统一允许
-        respFrame, err := buildSPOEResponse("allow", "", 0)
         if err != nil {
             log.Printf("build response error: %v", err)
             return
