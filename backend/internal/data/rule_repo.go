@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/bson/primitive"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"coraza-waf/backend/models"
@@ -14,11 +13,11 @@ import (
 
 type RuleRepository interface {
 	CreateRule(ctx context.Context, rule *models.Rule) error
-	UpdateRule(ctx context.Context, id primitive.ObjectID, update bson.M) error
-	DeleteRule(ctx context.Context, id primitive.ObjectID) error
-	GetRule(ctx context.Context, id primitive.ObjectID) (*models.Rule, error)
+	UpdateRule(ctx context.Context, id bson.ObjectID, update bson.M) error
+	DeleteRule(ctx context.Context, id bson.ObjectID) error
+	GetRule(ctx context.Context, id bson.ObjectID) (*models.Rule, error)
 	ListRules(ctx context.Context, filter bson.M, page, pageSize int) ([]models.Rule, int64, error)
-	EnableRule(ctx context.Context, id primitive.ObjectID, enabled bool) error
+	EnableRule(ctx context.Context, id bson.ObjectID, enabled bool) error
 }
 
 type MongoRuleRepo struct {
@@ -30,14 +29,14 @@ func NewRuleRepository(col *mongo.Collection) RuleRepository {
 }
 
 func (r *MongoRuleRepo) CreateRule(ctx context.Context, rule *models.Rule) error {
-	rule.ID = primitive.NewObjectID()
+	rule.ID = bson.NewObjectID()
 	rule.CreatedAt = time.Now()
 	rule.UpdatedAt = time.Now()
 	_, err := r.col.InsertOne(ctx, rule)
 	return err
 }
 
-func (r *MongoRuleRepo) UpdateRule(ctx context.Context, id primitive.ObjectID, update bson.M) error {
+func (r *MongoRuleRepo) UpdateRule(ctx context.Context, id bson.ObjectID, update bson.M) error {
 	update["updated_at"] = time.Now()
 	res, err := r.col.UpdateByID(ctx, id, bson.M{"$set": update})
 	if err != nil {
@@ -49,7 +48,7 @@ func (r *MongoRuleRepo) UpdateRule(ctx context.Context, id primitive.ObjectID, u
 	return nil
 }
 
-func (r *MongoRuleRepo) DeleteRule(ctx context.Context, id primitive.ObjectID) error {
+func (r *MongoRuleRepo) DeleteRule(ctx context.Context, id bson.ObjectID) error {
 	res, err := r.col.DeleteOne(ctx, bson.M{"_id": id})
 	if err != nil {
 		return err
@@ -60,7 +59,7 @@ func (r *MongoRuleRepo) DeleteRule(ctx context.Context, id primitive.ObjectID) e
 	return nil
 }
 
-func (r *MongoRuleRepo) GetRule(ctx context.Context, id primitive.ObjectID) (*models.Rule, error) {
+func (r *MongoRuleRepo) GetRule(ctx context.Context, id bson.ObjectID) (*models.Rule, error) {
 	var rule models.Rule
 	err := r.col.FindOne(ctx, bson.M{"_id": id}).Decode(&rule)
 	if err != nil {
@@ -90,6 +89,6 @@ func (r *MongoRuleRepo) ListRules(ctx context.Context, filter bson.M, page, page
 	return rules, total, nil
 }
 
-func (r *MongoRuleRepo) EnableRule(ctx context.Context, id primitive.ObjectID, enabled bool) error {
+func (r *MongoRuleRepo) EnableRule(ctx context.Context, id bson.ObjectID, enabled bool) error {
 	return r.UpdateRule(ctx, id, bson.M{"enabled": enabled})
 }

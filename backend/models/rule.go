@@ -1,12 +1,12 @@
 package models
 
 import (
-	"go.mongodb.org/mongo-driver/v2/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"time"
 )
 
 type Rule struct {
-	ID           primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	ID           bson.ObjectId `bson:"_id,omitempty" json:"id"`
 	Name         string             `bson:"name" json:"name"`
 	Content      string             `bson:"content" json:"content"`
 	RuleType     string             `bson:"rule_type" json:"rule_type"`

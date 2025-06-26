@@ -9,7 +9,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/bson/primitive"
 	"coraza-waf/backend/internal/data"
 	"coraza-waf/backend/models"
 )
@@ -90,7 +89,7 @@ func (h *RuleHandler) CreateRule(c *gin.Context) {
 // 更新规则
 func (h *RuleHandler) UpdateRule(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := primitive.ObjectIDFromHex(idStr)
+	id, err := bson.ObjectIDFromHex(idStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效ID"})
 		return
@@ -121,7 +120,7 @@ func (h *RuleHandler) UpdateRule(c *gin.Context) {
 // 删除规则
 func (h *RuleHandler) DeleteRule(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := primitive.ObjectIDFromHex(idStr)
+	id, err := bson.ObjectIDFromHex(idStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效ID"})
 		return
@@ -139,7 +138,7 @@ func (h *RuleHandler) DeleteRule(c *gin.Context) {
 // 查询单条规则
 func (h *RuleHandler) GetRule(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := primitive.ObjectIDFromHex(idStr)
+	id, err := bson.ObjectIDFromHex(idStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效ID"})
 		return
@@ -180,7 +179,7 @@ func (h *RuleHandler) ListRules(c *gin.Context) {
 // 启用/禁用规则
 func (h *RuleHandler) EnableRule(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := primitive.ObjectIDFromHex(idStr)
+	id, err := bson.ObjectIDFromHex(idStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效ID"})
 		return

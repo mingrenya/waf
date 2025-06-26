@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/bson/primitive"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
@@ -222,7 +221,7 @@ func FindLogByID(ctx context.Context, id string) (map[string]interface{}, error)
 	if collection == nil {
 		return nil, fmt.Errorf("MongoDB collection 未初始化")
 	}
-	objID, err := primitive.ObjectIDFromHex(id)
+	objID, err := bson.ObjectIDFromHex(id)
 	if err != nil {
 		log.Printf("[FindLogByID] ID格式错误: %v\n", err)
 		return nil, err
@@ -241,7 +240,7 @@ func FindRuleByID(ctx context.Context, id string) (map[string]interface{}, error
 		return nil, fmt.Errorf("MongoDB未初始化")
 	}
 	col := db.Collection("rules")
-	objID, err := primitive.ObjectIDFromHex(id)
+	objID, err := bson.ObjectIDFromHex(id)
 	if err != nil {
 		log.Printf("[FindRuleByID] ID格式错误: %v\n", err)
 		return nil, err
@@ -280,4 +279,8 @@ func (w *ResponseBodyWriter) WriteString(s string) (int, error) {
 	// fallback
 	return w.Write([]byte(s))
 }
+
+// 将 primitive.ObjectID 替换为 bson.ObjectID
+// 将 primitive.NewObjectID 替换为 bson.NewObjectID
+// 将 primitive.ObjectIDFromHex 替换为 bson.ObjectIDFromHex
 
