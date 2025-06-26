@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"coraza-waf/backend/services"
+	"coraza-waf/backend/handlers"
 )
 
 func RegisterAPIRoutes(r *gin.Engine, wafService *services.WAFService) {
@@ -33,5 +34,8 @@ func RegisterAPIRoutes(r *gin.Engine, wafService *services.WAFService) {
 
 	// Prometheus Metrics 端点（新增）
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
+
+	// 日志查询接口
+	r.GET("/api/logs", handlers.HandleLogQuery)
 }
 
