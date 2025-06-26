@@ -68,13 +68,12 @@ func (s *SPOAServer) handleConn(conn net.Conn) {
             return
         }
 
-        msgName, headers, body, err := parseSPOEFrame(frameData)
+        msgName, headers, _, err := parseSPOEFrame(frameData)
         if err != nil {
             log.Printf("parse frame error: %v", err)
             return
         }
 
-        clientIP := headers["client-ip"]
         var respFrame []byte
         // 官方示例联动逻辑
         switch msgName {
