@@ -3,42 +3,56 @@ package database
 import (
 	"context"
 	"time"
-	"log"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-
-	"coraza-waf/backend/pkg/logging"
+	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 )
 
+// MongoService 封装 MongoDB 操作
 type MongoService struct {
 	client     *mongo.Client
 	collection *mongo.Collection
+	ctx        context.Context
+	cancel     context.CancelFunc
 }
 
-func NewMongoService(uri, dbName, collName string) (*MongoService, error) {
+// NewMongoService 初始化 MongoService，参数：uri, 数据库名, 集合名
+func NewMongoService(uri, dbName, collectionName string) (*MongoService, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	clientOptions := options.Client().ApplyURI(uri).SetWriteConcern(writeconcern.New(writeconcern.WMajority()))
 
-	clientOpts := options.Client().ApplyURI(uri)
-	client, err := mongo.Connect(ctx, clientOpts)
+	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
+		cancel()
 		return nil, err
 	}
 
-	coll := client.Database(dbName).Collection(collName)
-	return &MongoService{client: client, collection: coll}, nil
+	// Ping 确认连接
+	if err := client.Ping(ctx, nil); err != nil {
+		cancel()
+		return nil, err
+	}
+
+	collection := client.Database(dbName).Collection(collectionName)
+
+	return &MongoService{
+		client:     client,
+		collection: collection,
+		ctx:        ctx,
+		cancel:     cancel,
+	}, nil
 }
 
-func (m *MongoService) InsertLog(logEntry *logging.WafLog) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+// InsertLog 插入日志文档
+func (m *MongoService) InsertLog(document interface{}) error {
+	_, err := m.collection.InsertOne(m.ctx, document)
+	return err
+}
 
-	_, err := m.collection.InsertOne(ctx, logEntry)
-	if err != nil {
-		log.Printf("Mongo InsertOne error: %v", err)
-		return err
-	}
-	return nil
+// Close 断开连接，释放资源
+func (m *MongoService) Close() error {
+	m.cancel()
+	return m.client.Disconnect(m.ctx)
 }
 

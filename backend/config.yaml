@@ -1,9 +1,9 @@
 loglevel: info
-bind: 127.0.0.1:8080
+bind: 0.0.0.0:8080
 default_application: default-app
 applications:
   - name: default-app
-    address: 127.0.0.1:80
+    address: 0.0.0.0:80
     workers: 4
     response_check: true
     transaction_ttl_ms: 60000
@@ -18,5 +18,5 @@ spoa:
       transaction_ttl_ms: 60000
 waf:
   rules:
-    - rules.conf
-
+    - /rules/owasp_crs/crs-setup.conf.example  # OWASP CRS 核心启用文件
+    - /rules/owasp_crs/rules/REQUEST-942-APPLICATION-ATTACK-SQLI.conf  # SQL 注入规则文件
