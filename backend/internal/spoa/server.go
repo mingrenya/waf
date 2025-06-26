@@ -82,7 +82,7 @@ func (s *SPOAServer) handleConn(conn net.Conn) {
         }
 
         // 这里根据WAF逻辑可以调整是否阻断，先统一允许
-        respFrame, err := buildSPOEResponse(true)
+        respFrame, err := buildSPOEResponse("allow", "", 0)
         if err != nil {
             log.Printf("build response error: %v", err)
             return
@@ -162,35 +162,37 @@ func parseSPOEFrame(data []byte) (msgName string, headers map[string]string, bod
 }
 
 
-// buildSPOEResponse 构造允许动作响应帧
-func buildSPOEResponse(allow bool) ([]byte, error) {
-	var action string
-	if allow {
-		action = "allow"
-	} else {
-		action = "deny"
+// buildSPOEResponse 构造允许动作响应帧，支持 coraza.action/coraza.data/coraza.error
+func buildSPOEResponse(action string, data string, errorCode int) ([]byte, error) {
+	kvs := [][]byte{}
+
+	// coraza.action
+	key := []byte("coraza.action")
+	val := []byte(action)
+	kvs = append(kvs, []byte{byte(len(key))}, key, []byte{byte(len(val))}, val)
+
+	// coraza.data（可选）
+	if data != "" {
+		key = []byte("coraza.data")
+		val = []byte(data)
+		kvs = append(kvs, []byte{byte(len(key))}, key, []byte{byte(len(val))}, val)
 	}
 
-	// 构建 SPOE kv 结构：
-	// [keyLen][key][valLen][val]
-	key := "action"
-	val := action
-	kb := []byte(key)
-	vb := []byte(val)
-
-	framePayload := []byte{
-		byte(len(kb)),
+	// coraza.error（可选）
+	if errorCode != 0 {
+		key = []byte("coraza.error")
+		val = []byte(fmt.Sprintf("%d", errorCode))
+		kvs = append(kvs, []byte{byte(len(key))}, key, []byte{byte(len(val))}, val)
 	}
-	framePayload = append(framePayload, kb...)
-	framePayload = append(framePayload, byte(len(vb)))
-	framePayload = append(framePayload, vb...)
 
-	// 前缀加上 4 字节长度字段（大端）
+	framePayload := []byte{}
+	for _, b := range kvs {
+		framePayload = append(framePayload, b...)
+	}
+
 	totalLen := uint32(len(framePayload))
 	buf := make([]byte, 4)
 	binary.BigEndian.PutUint32(buf, totalLen)
-
-	// 拼接最终响应帧
 	resp := append(buf, framePayload...)
 	return resp, nil
 }
