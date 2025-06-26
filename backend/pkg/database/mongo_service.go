@@ -5,7 +5,6 @@ import (
 	"time"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
-	"go.mongodb.org/mongo-driver/v2/mongo/writeconcern"
 )
 
 // MongoService 封装 MongoDB 操作
@@ -19,9 +18,9 @@ type MongoService struct {
 // NewMongoService 初始化 MongoService，参数：uri, 数据库名, 集合名
 func NewMongoService(uri, dbName, collectionName string) (*MongoService, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	clientOptions := options.Client().ApplyURI(uri).SetWriteConcern(writeconcern.New(writeconcern.WMajority()))
+	clientOptions := options.Client().ApplyURI(uri)
 
-	client, err := mongo.Connect(ctx, clientOptions)
+	client, err := mongo.Connect(context.Background(), clientOptions)
 	if err != nil {
 		cancel()
 		return nil, err

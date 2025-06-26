@@ -22,4 +22,5 @@ type Rule struct {
 	UpdateReason string             `bson:"update_reason" json:"update_reason"`
 	CreatedAt    time.Time          `bson:"created_at" json:"created_at"`
 	UpdatedAt    time.Time          `bson:"updated_at" json:"updated_at"`
+	Format       string             `bson:"format" json:"format"` // 规则内容格式：modsec/json/expr等
 }

@@ -12,6 +12,11 @@ func HandleResponse(c *gin.Context, responseBody string, responseTime int64) {
 	for k, v := range c.Writer.Header() {
 		headers[k] = v
 	}
+	// 从 context 获取规则命中信息（如有）
+	ruleID, _ := c.Get("matched_rule_id")
+	ruleContent, _ := c.Get("matched_rule_content")
+	ruleFormat, _ := c.Get("matched_rule_format")
+
 	logData := logger.WafLog{
 		RequestTime:     "", // 可选，或传入 time.Now().Format(time.RFC3339)
 		SourceIP:        c.ClientIP(),
@@ -29,16 +34,13 @@ func HandleResponse(c *gin.Context, responseBody string, responseTime int64) {
 		StatusCode:      c.Writer.Status(),
 		ResponseTime:    responseTime,
 		Blocked:         false, // 可根据实际检测逻辑设置
+		RuleID:          toStrPtr(ruleID),
+		RuleContent:     toStr(ruleContent),
+		RuleFormat:      toStr(ruleFormat),
 	}
 
-	// 可根据实际检测逻辑设置拦截信息
-	// logData.Blocked = true
-	// logData.CorazaRuleID = ptr("942120")
-	// logData.CorazaRuleMsg = "SQL Injection Attempt"
-	// logData.CorazaAction = "deny"
-
 	if err := logger.InsertLog(logData); err != nil {
-		log.Println("写入响应日志失败:", err)
+		log.Printf("写入响应日志失败: %v, data: %+v\n", err, logData)
 	}
 }
 

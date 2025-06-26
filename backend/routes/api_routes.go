@@ -5,6 +5,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"coraza-waf/backend/services"
 	"coraza-waf/backend/handlers"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"coraza-waf/backend/internal/data"
 )
 
 func RegisterAPIRoutes(r *gin.Engine, wafService *services.WAFService) {
@@ -37,5 +39,47 @@ func RegisterAPIRoutes(r *gin.Engine, wafService *services.WAFService) {
 
 	// 日志查询接口
 	r.GET("/api/logs", handlers.HandleLogQuery)
+
+	// 日志导出CSV接口（新增）
+	r.GET("/api/logs/export/csv", handlers.HandleLogExportCSV)
+
+	// 日志导出JSON接口（新增）
+	r.GET("/api/logs/export/json", handlers.HandleLogExportJSON)
+
+	// 日志聚合统计接口
+	r.GET("/api/logs/agg/rule_id", handlers.HandleLogAggByRuleID)
+	r.GET("/api/logs/agg/attack_type", handlers.HandleLogAggByAttackType)
+	r.GET("/api/logs/agg/src_ip", handlers.HandleLogAggBySourceIP)
+	r.GET("/api/logs/agg/dest_ip", handlers.HandleLogAggByDestIP)
+
+	// 规则管理相关依赖注入
+	// 获取 MongoDB collection
+	client := handlers.GetMongoClient() // 你需要在 handlers 包中实现此方法，或直接传递 client
+	db := client.Database("waf_logs") // 或用配置
+	ruleCol := db.Collection("rules")
+	ruleRepo := data.NewRuleRepository(ruleCol)
+
+	// 热加载实现，ReloadURL 可通过配置/env/env变量传入
+	reloader := &handlers.APIReloader{ReloadURL: "http://127.0.0.1:9090/api/reload"}
+	ruleHandler := handlers.NewRuleHandler(ruleRepo, reloader)
+
+	// 规则管理 RESTful API
+	r.POST("/api/rules", ruleHandler.CreateRule)
+	r.PUT("/api/rules/:id", ruleHandler.UpdateRule)
+	r.DELETE("/api/rules/:id", ruleHandler.DeleteRule)
+	r.GET("/api/rules/:id", ruleHandler.GetRule)
+	r.GET("/api/rules", ruleHandler.ListRules)
+	r.PATCH("/api/rules/:id/enable", ruleHandler.EnableRule)
+
+	// 异步导出相关接口
+	r.POST("/api/logs/export/async", handlers.HandleLogExportAsync)
+	r.GET("/api/logs/export/task/:task_id", handlers.HandleLogExportTaskStatus)
+	r.GET("/api/logs/export/download/:task_id", handlers.HandleLogExportTaskDownload)
+
+	// 日志详情接口
+	r.GET("/api/logs/:id", handlers.HandleLogDetail)
+
+	// 日志全文检索接口
+	r.GET("/api/logs/search", handlers.HandleLogFullTextSearch)
 }
 
