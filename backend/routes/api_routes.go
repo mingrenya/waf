@@ -5,8 +5,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"coraza-waf/backend/services"
 	"coraza-waf/backend/handlers"
-	"go.mongodb.org/mongo-driver/v2/mongo"
 	"coraza-waf/backend/internal/data"
+	"coraza-waf/backend/logger"
 )
 
 func RegisterAPIRoutes(r *gin.Engine, wafService *services.WAFService) {
@@ -54,7 +54,7 @@ func RegisterAPIRoutes(r *gin.Engine, wafService *services.WAFService) {
 
 	// 规则管理相关依赖注入
 	// 获取 MongoDB collection
-	client := handlers.GetMongoClient() // 你需要在 handlers 包中实现此方法，或直接传递 client
+	client := logger.Client()
 	db := client.Database("waf_logs") // 或用配置
 	ruleCol := db.Collection("rules")
 	ruleRepo := data.NewRuleRepository(ruleCol)
@@ -82,4 +82,5 @@ func RegisterAPIRoutes(r *gin.Engine, wafService *services.WAFService) {
 	// 日志全文检索接口
 	r.GET("/api/logs/search", handlers.HandleLogFullTextSearch)
 }
+
 

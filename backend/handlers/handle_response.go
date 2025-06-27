@@ -6,12 +6,21 @@ import (
 	"log"
 )
 
+// toStrPtrSafe safely converts an interface{} to *string if possible, otherwise returns nil.
+func toStrPtrSafe(val interface{}) *string {
+	if str, ok := val.(string); ok {
+		return &str
+	}
+	return nil
+}
+
 // HandleResponse 记录响应日志
 func HandleResponse(c *gin.Context, responseBody string, responseTime int64) {
 	headers := make(map[string][]string)
 	for k, v := range c.Writer.Header() {
 		headers[k] = v
 	}
+
 	// 从 context 获取规则命中信息（如有）
 	ruleID, _ := c.Get("matched_rule_id")
 	ruleContent, _ := c.Get("matched_rule_content")
@@ -34,7 +43,7 @@ func HandleResponse(c *gin.Context, responseBody string, responseTime int64) {
 		StatusCode:      c.Writer.Status(),
 		ResponseTime:    responseTime,
 		Blocked:         false, // 可根据实际检测逻辑设置
-		RuleID:          toStrPtr(ruleID),
+		RuleID:          toStrPtrSafe(ruleID),
 		RuleContent:     toStr(ruleContent),
 		RuleFormat:      toStr(ruleFormat),
 	}
@@ -43,5 +52,6 @@ func HandleResponse(c *gin.Context, responseBody string, responseTime int64) {
 		log.Printf("写入响应日志失败: %v, data: %+v\n", err, logData)
 	}
 }
+
 
 

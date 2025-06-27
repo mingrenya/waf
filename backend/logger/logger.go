@@ -93,13 +93,13 @@ func CloseMongoDB() {
 }
 
 // 插入日志（导出，便于外部调用）
-func InsertLog(log WafLog) error {
+func InsertLog(wlog WafLog) error {
 	if collection == nil {
 		return fmt.Errorf("MongoDB collection 未初始化")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), mongoInsertTimeout)
 	defer cancel()
-	_, err := collection.InsertOne(ctx, log)
+	_, err := collection.InsertOne(ctx, wlog)
 	if err != nil {
 		log.Printf("插入日志失败: %v\n", err)
 		return err
@@ -120,7 +120,7 @@ func HandleRequest(ctx *gin.Context) {
 		body = buf.String()
 		ctx.Request.Body = io.NopCloser(bytes.NewBufferString(body))
 	}
-	log := WafLog{
+	logEntry := WafLog{
 		RequestTime:    time.Now().Format(time.RFC3339),
 		SourceIP:       ctx.ClientIP(),
 		RequestMethod:  ctx.Request.Method,
@@ -135,7 +135,7 @@ func HandleRequest(ctx *gin.Context) {
 		RequestBody:    body,
 		RequestHeaders: headers,
 	}
-	if err := InsertLog(log); err != nil {
+	if err := InsertLog(logEntry); err != nil {
 		log.Printf("请求日志写入失败: %v\n", err)
 	}
 }
@@ -146,7 +146,7 @@ func HandleResponse(ctx *gin.Context, responseBody string, responseTime int64) {
 	for k, v := range ctx.Writer.Header() {
 		headers[k] = v
 	}
-	log := WafLog{
+	logEntry := WafLog{
 		RequestTime:     time.Now().Format(time.RFC3339),
 		SourceIP:        ctx.ClientIP(),
 		RequestMethod:   ctx.Request.Method,
@@ -163,7 +163,7 @@ func HandleResponse(ctx *gin.Context, responseBody string, responseTime int64) {
 		StatusCode:      ctx.Writer.Status(),
 		ResponseTime:    responseTime,
 	}
-	if err := InsertLog(log); err != nil {
+	if err := InsertLog(logEntry); err != nil {
 		log.Printf("响应日志写入失败: %v\n", err)
 	}
 }
@@ -283,4 +283,5 @@ func (w *ResponseBodyWriter) WriteString(s string) (int, error) {
 // 将 primitive.ObjectID 替换为 bson.ObjectID
 // 将 primitive.NewObjectID 替换为 bson.NewObjectID
 // 将 primitive.ObjectIDFromHex 替换为 bson.ObjectIDFromHex
+
 

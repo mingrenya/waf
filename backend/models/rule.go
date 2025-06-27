@@ -6,7 +6,7 @@ import (
 )
 
 type Rule struct {
-	ID           bson.ObjectId `bson:"_id,omitempty" json:"id"`
+	ID           bson.ObjectID `bson:"_id,omitempty" json:"id"`
 	Name         string             `bson:"name" json:"name"`
 	Content      string             `bson:"content" json:"content"`
 	RuleType     string             `bson:"rule_type" json:"rule_type"`

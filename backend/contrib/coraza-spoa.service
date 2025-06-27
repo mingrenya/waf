@@ -3,12 +3,12 @@ Description=Coraza WAF SPOA Daemon
 Documentation=https://www.coraza.io
 
 [Service]
-ExecStart=/usr/bin/coraza-spoa -config=/etc/coraza-spoa/config.yaml
-WorkingDirectory=/
+ExecStart=/usr/bin/coraza-spoa -config=/etc/coraza-spoa/coraza-spoa.yaml
+WorkingDirectory=/etc/coraza-spoa
 Restart=always
 Type=exec
-User=coraza-spoa
-Group=coraza-spoa
+User=haproxy
+Group=haproxy
 
 # Hardening
 AmbientCapabilities=
@@ -299,7 +299,7 @@ RestrictAddressFamilies=AF_INET AF_INET6
 SystemCallArchitectures=native
 SystemCallFilter=@system-service -@setuid -@ipc -@mount
 
-IPAddressDeny=any
+IPAddressDeny=::/0, 0.0.0.0/0
 IPAddressAllow=127.0.0.1
 
 CapabilityBoundingSet=CAP_NET_BIND_SERVICE

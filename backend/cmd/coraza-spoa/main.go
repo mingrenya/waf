@@ -22,7 +22,7 @@ func main() {
 	}
 
 	// 启动 SPOE Server（注意传入 addr）
-	server := spoa.NewServer("127.0.0.1:8080", waf, mongo)
+	server := spoa.NewServer("0.0.0.0:9000", waf, mongo)
 
 	// 正确调用 Run()
 	if err := server.Run(); err != nil {

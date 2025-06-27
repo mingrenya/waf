@@ -22,7 +22,7 @@ func HandleRequest(c *gin.Context) {
 	if bytes.Contains(bytes.ToLower(body), []byte("select")) {
 		matched = true
 		ruleID = "1001"
-		ruleContent = "SecRule ARGS \\"select\\" id:1001,deny,msg:'SQLi'"
+		ruleContent = "SecRule ARGS \"select\" id:1001,deny,msg:'SQLi'"
 		ruleFormat = "modsec"
 	}
 	// ============================================

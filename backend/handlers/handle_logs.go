@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/csv"
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"os"
@@ -183,6 +184,17 @@ func HandleLogExportJSON(c *gin.Context) {
 	c.JSON(http.StatusOK, logs)
 }
 
+// BuildLogFilter 构造日志查询过滤条件
+func BuildLogFilter(params map[string]string) bson.M {
+	filter := bson.M{}
+	for k, v := range params {
+		if v != "" {
+			filter[k] = v
+		}
+	}
+	return filter
+}
+
 // toStr 辅助函数（适配 map[string]interface{}）
 func toStr(v interface{}) string {
 	if v == nil {
@@ -198,6 +210,14 @@ func toStr(v interface{}) string {
 	default:
 		return strings.Trim(fmt.Sprintf("%v", val), "{}[]")
 	}
+}
+
+// toStrPtr 辅助函数
+func toStrPtr(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
 }
 
 // 导出任务结构体
@@ -376,3 +396,4 @@ func HandleLogFullTextSearch(c *gin.Context) {
 		"logs": logs,
 	})
 }
+
