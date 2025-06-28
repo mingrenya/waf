@@ -21,7 +21,11 @@ func main() {
 		log.Fatalf("Failed to connect MongoDB: %v", err)
 	}
 
+<<<<<<< HEAD
 	// 启动 SPOE Server（注意传入 addr）
+=======
+	// 启动 SPOE Server，监听 0.0.0.0:9000，与配置文件一致
+>>>>>>> 347166d8 (waf)
 	server := spoa.NewServer("0.0.0.0:9000", waf, mongo)
 
 	// 正确调用 Run()
